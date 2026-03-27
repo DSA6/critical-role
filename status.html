@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Application Status</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+        .container{max-width:600px;margin:0 auto;padding:20px}
+        .header{background:#232f3e;color:#fff;padding:20px;text-align:center;border-radius:8px 8px 0 0}
+        .header h1{font-size:1.3rem;margin-bottom:4px}.header p{font-size:.85rem;opacity:.8}
+        .card{background:#fff;padding:24px;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .search-box{display:flex;gap:10px;margin-bottom:20px}
+        .search-box input{flex:1;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+        .search-box input:focus{outline:none;border-color:#ff9900}
+        .search-box button{padding:12px 20px;background:#ff9900;color:#fff;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer}
+        .search-box button:hover{background:#e68a00}
+        .app-card{border:1px solid #eee;border-radius:8px;padding:16px;margin-bottom:12px}
+        .app-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .app-role{font-size:1.1rem;font-weight:700}
+        .badge{padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600}
+        .badge-pending_manager{background:#fff3cd;color:#856404}
+        .badge-pending_ld{background:#cce5ff;color:#004085}
+        .badge-manager_rejected{background:#f8d7da;color:#721c24}
+        .badge-waiting_list{background:#d4edda;color:#155724}
+        .badge-ld_rejected{background:#f8d7da;color:#721c24}
+        .app-detail{font-size:.9rem;color:#555;padding:3px 0}
+        .app-detail span{font-weight:600}
+        .status-msg{padding:16px;border-radius:8px;text-align:center;margin-bottom:12px;font-size:1rem}
+        .status-msg.accepted{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+        .status-msg.pending{background:#fff3cd;color:#856404;border:1px solid #ffeeba}
+        .status-msg.rejected{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+        .empty{text-align:center;padding:30px;color:#999}
+        .timeline{margin-top:10px;padding-left:16px;border-left:3px solid #ddd}
+        .timeline-item{padding:6px 0 6px 12px;font-size:.85rem;color:#666}
+        .timeline-item.active{border-left:3px solid #ff9900;margin-left:-3px;padding-left:15px;color:#333;font-weight:600}
+        .nav-link{text-align:center;margin-top:16px;font-size:.9rem}
+        .nav-link a{color:#ff9900;text-decoration:none}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>My Application Status</h1>
+        <p>Enter your login to check your critical role applications</p>
+    </div>
+    <div class="card">
+        <div class="search-box">
+            <input type="text" id="loginInput" placeholder="Enter your login (e.g. firdaub)" autofocus>
+            <button onclick="checkStatus()">Check</button>
+        </div>
+        <div id="results"></div>
+        <div class="nav-link">
+            <a href="apply.html">📋 Apply for a new role</a>
+        </div>
+    </div>
+</div>
+<script src="config.js"></script>
+<script src="github-api.js"></script>
+<script>
+var STATUSES = {
+    pending_manager: { label: "Pending Manager Review", icon: "⏳", type: "pending", desc: "Your manager has been notified. Waiting for their review." },
+    pending_ld: { label: "Pending L&D Review", icon: "📋", type: "pending", desc: "Your manager approved! Now waiting for L&D team to review." },
+    manager_rejected: { label: "Rejected by Manager", icon: "❌", type: "rejected", desc: "Your manager did not approve this application. Speak with them for feedback." },
+    waiting_list: { label: "Waiting List (Accepted)", icon: "🎉", type: "accepted", desc: "Congratulations! You've been accepted and are on the waiting list for training." },
+    ld_rejected: { label: "Rejected by L&D", icon: "❌", type: "rejected", desc: "L&D team did not approve this application at this time. You can reapply later." }
+};
+
+document.getElementById("loginInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") checkStatus();
+});
+
+async function checkStatus() {
+    var login = document.getElementById("loginInput").value.trim().toLowerCase();
+    if (!login) return;
+    document.getElementById("results").innerHTML = '<div class="empty">Loading...</div>';
+
+    try {
+        var result = await loadApplications();
+        var myApps = result.data.filter(function(a) { return a.aa_login === login; });
+        myApps.sort(function(a,b) { return (b.submitted_at||"").localeCompare(a.submitted_at||""); });
+
+        if (myApps.length === 0) {
+            document.getElementById("results").innerHTML = '<div class="empty">No applications found for <strong>' + login + '</strong>.<br>Want to <a href="apply.html" style="color:#ff9900">apply for a role</a>?</div>';
+            return;
+        }
+
+        var html = "";
+        myApps.forEach(function(app) {
+            var s = STATUSES[app.status] || { label: app.status, icon: "❓", type: "pending", desc: "" };
+
+            html += '<div class="status-msg ' + s.type + '">' + s.icon + ' ' + s.desc + '</div>';
+            html += '<div class="app-card">';
+            html += '<div class="app-header"><span class="app-role">' + app.critical_role + '</span><span class="badge badge-' + app.status + '">' + s.label + '</span></div>';
+            html += '<div class="app-detail"><span>Submitted:</span> ' + app.submitted_at + '</div>';
+            html += '<div class="app-detail"><span>Manager:</span> ' + (app.manager_name || "N/A") + '</div>';
+
+            // Timeline
+            html += '<div class="timeline">';
+            html += '<div class="timeline-item ' + (app.status === "pending_manager" ? "active" : "") + '">📝 Application submitted — ' + app.submitted_at + '</div>';
+
+            if (app.manager_reviewed_at) {
+                var mgrAction = (app.status === "manager_rejected") ? "❌ Manager rejected" : "✅ Manager approved";
+                html += '<div class="timeline-item ' + (app.status === "pending_ld" ? "active" : "") + '">' + mgrAction + ' — ' + app.manager_reviewed_at + '</div>';
+            } else if (app.status === "pending_manager") {
+                html += '<div class="timeline-item active">⏳ Waiting for manager review...</div>';
+            }
+
+            if (app.ld_reviewed_at) {
+                var ldAction = (app.status === "ld_rejected") ? "❌ L&D rejected" : "🎉 L&D accepted";
+                html += '<div class="timeline-item ' + (app.status === "waiting_list" || app.status === "ld_rejected" ? "active" : "") + '">' + ldAction + ' — ' + app.ld_reviewed_at + '</div>';
+            } else if (app.status === "pending_ld") {
+                html += '<div class="timeline-item active">⏳ Waiting for L&D review...</div>';
+            }
+
+            if (app.status === "waiting_list") {
+                html += '<div class="timeline-item active">🎯 On waiting list for training</div>';
+            }
+
+            html += '</div>'; // timeline
+            html += '</div>'; // app-card
+        });
+
+        document.getElementById("results").innerHTML = html;
+    } catch(e) {
+        document.getElementById("results").innerHTML = '<div class="empty">Error loading data: ' + e.message + '</div>';
+    }
+}
+</script>
+</body>
+</html>
