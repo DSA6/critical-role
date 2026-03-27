@@ -1,5 +1,51 @@
 [
   {
+    "id": "mn8w7rtm53b8",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "Receive Problem Solver",
+    "justification": "love it",
+    "status": "waiting_list",
+    "submitted_at": "2026-03-27 12:44:03",
+    "manager_review": {
+      "adapt": "pass",
+      "behavior": "pass",
+      "safety": "pass",
+      "performance": "pass",
+      "notes": ""
+    },
+    "manager_reviewed_at": "2026-03-27 12:45:30",
+    "ld_notes": "",
+    "ld_reviewed_at": "2026-03-27 13:34:21"
+  },
+  {
+    "id": "mn8vl3wbdjob",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "Dock Clerk",
+    "justification": "love it",
+    "status": "manager_rejected",
+    "submitted_at": "2026-03-27 12:26:26",
+    "manager_review": {
+      "adapt": "fail",
+      "behavior": "fail",
+      "safety": "fail",
+      "performance": "fail",
+      "notes": ""
+    },
+    "manager_reviewed_at": "2026-03-27 12:27:41",
+    "ld_notes": null,
+    "ld_reviewed_at": null
+  },
+  {
     "id": "mn8v8ine9ixl",
     "aa_login": "firdaub",
     "aa_name": "Firdaus Bustamam",
@@ -44,51 +90,5 @@
     "manager_reviewed_at": "2026-03-27 11:22:15",
     "ld_notes": "",
     "ld_reviewed_at": "2026-03-27 12:20:27"
-  },
-  {
-    "id": "mn8vl3wbdjob",
-    "aa_login": "firdaub",
-    "aa_name": "Firdaus Bustamam",
-    "manager_name": "Michelle Gray",
-    "manager_login": "",
-    "department": "1299",
-    "emp_type": "AMZN",
-    "critical_role": "Dock Clerk",
-    "justification": "love it",
-    "status": "manager_rejected",
-    "submitted_at": "2026-03-27 12:26:26",
-    "manager_review": {
-      "adapt": "fail",
-      "behavior": "fail",
-      "safety": "fail",
-      "performance": "fail",
-      "notes": ""
-    },
-    "manager_reviewed_at": "2026-03-27 12:27:41",
-    "ld_notes": null,
-    "ld_reviewed_at": null
-  },
-  {
-    "id": "mn8w7rtm53b8",
-    "aa_login": "firdaub",
-    "aa_name": "Firdaus Bustamam",
-    "manager_name": "Michelle Gray",
-    "manager_login": "",
-    "department": "1299",
-    "emp_type": "AMZN",
-    "critical_role": "Receive Problem Solver",
-    "justification": "love it",
-    "status": "pending_ld",
-    "submitted_at": "2026-03-27 12:44:03",
-    "manager_review": {
-      "adapt": "pass",
-      "behavior": "pass",
-      "safety": "pass",
-      "performance": "pass",
-      "notes": ""
-    },
-    "manager_reviewed_at": "2026-03-27 12:45:30",
-    "ld_notes": null,
-    "ld_reviewed_at": null
   }
 ]
