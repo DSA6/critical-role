@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L&D Admin Dashboard</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+        .container{max-width:1100px;margin:0 auto;padding:20px}
+        .header{background:#232f3e;color:#fff;padding:20px 24px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+        .header h1{font-size:1.4rem}
+        .count{background:rgba(255,255,255,.2);padding:4px 12px;border-radius:12px;font-size:.9rem}
+        .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+        .filter-btn{padding:8px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;text-decoration:none;color:#333;font-size:.85rem;cursor:pointer}
+        .filter-btn.active{background:#ff9900;color:#fff;border-color:#ff9900}
+        .flash{padding:12px;border-radius:6px;margin-bottom:16px;text-align:center}
+        .flash.success{background:#d4edda;color:#155724}
+        .app-card{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+        .app-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .app-name{font-size:1.1rem;font-weight:700}
+        .badge{padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600}
+        .badge-pending_manager{background:#fff3cd;color:#856404}
+        .badge-pending_ld{background:#cce5ff;color:#004085}
+        .badge-manager_rejected{background:#f8d7da;color:#721c24}
+        .badge-waiting_list{background:#d4edda;color:#155724}
+        .badge-ld_rejected{background:#f8d7da;color:#721c24}
+        .app-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.9rem;color:#555}
+        .detail-label{font-weight:600}
+        .manager-assessment{margin-top:12px;padding:12px;background:#f8f9fa;border-radius:6px}
+        .manager-assessment h4{margin-bottom:8px;font-size:.9rem}
+        .criteria-list{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem}
+        .review-form{margin-top:16px;padding-top:16px;border-top:1px solid #eee}
+        .review-form textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;resize:vertical;min-height:60px}
+        .review-form textarea:focus{outline:none;border-color:#ff9900}
+        .btn-group{display:flex;gap:10px;margin-top:10px}
+        .btn{padding:10px 20px;border:none;border-radius:6px;font-weight:600;cursor:pointer;color:#fff;font-size:.9rem}
+        .btn-approve{background:#28a745}
+        .btn-reject{background:#dc3545}
+        .btn:disabled{background:#ccc;cursor:not-allowed}
+        .btn-link{padding:8px 16px;background:#17a2b8;color:#fff;border:none;border-radius:6px;font-size:.85rem;cursor:pointer;text-decoration:none;display:inline-block;margin-top:10px}
+        .empty{text-align:center;padding:40px;color:#999}
+        .refresh-btn{background:#ff9900;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.85rem}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>L&D Admin Dashboard</h1>
+        <div><span class="count" id="countLabel">Loading...</span> <button class="refresh-btn" onclick="init()">🔄 Refresh</button></div>
+    </div>
+    <div id="flash"></div>
+    <div class="filters" id="filters"></div>
+    <div id="appList"><div class="empty">Loading applications...</div></div>
+</div>
+<script src="config.js"></script>
+<script src="github-api.js"></script>
+<script src="slack-api.js"></script>
+<script>
+const STATUSES = {
+    pending_manager: "Pending Manager",
+    pending_ld: "Pending L&D Review",
+    manager_rejected: "Rejected by Manager",
+    waiting_list: "Waiting List (Accepted)",
+    ld_rejected: "Rejected by L&D"
+};
+
+let allApps = [], currentSha = null, currentFilter = "all";
+
+async function init() {
+    try {
+        const { data, sha } = await loadApplications();
+        allApps = data; currentSha = sha;
+        allApps.sort((a,b) => (b.submitted_at||"").localeCompare(a.submitted_at||""));
+        renderFilters();
+        renderApps();
+    } catch(e) {
+        document.getElementById("appList").innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+    }
+}
+
+function renderFilters() {
+    const f = document.getElementById("filters");
+    let html = `<a class="filter-btn ${currentFilter==='all'?'active':''}" onclick="setFilter('all')">All</a>`;
+    for (const [k,v] of Object.entries(STATUSES)) {
+        const count = allApps.filter(a=>a.status===k).length;
+        html += `<a class="filter-btn ${currentFilter===k?'active':''}" onclick="setFilter('${k}')">${v} (${count})</a>`;
+    }
+    f.innerHTML = html;
+}
+
+function setFilter(f) { currentFilter = f; renderApps(); renderFilters(); }
+
+function renderApps() {
+    const filtered = currentFilter === "all" ? allApps : allApps.filter(a=>a.status===currentFilter);
+    document.getElementById("countLabel").textContent = `${filtered.length} application(s)`;
+    if (!filtered.length) { document.getElementById("appList").innerHTML = '<div class="empty">No applications found.</div>'; return; }
+
+    let html = "";
+    filtered.forEach(app => {
+        const review = app.manager_review || {};
+        const criteriaHtml = app.manager_review ? `<div class="manager-assessment"><h4>Manager Assessment (${app.manager_reviewed_at||""})</h4><div class="criteria-list">${
+            ["adapt","behavior","safety","performance"].map(c => `<span>${c}: ${review[c]==="pass"?"✅":review[c]==="needs_improvement"?"⚠️":"❌"}</span>`).join("")
+        }</div>${review.notes?`<div style="margin-top:8px;font-size:.85rem"><strong>Notes:</strong> ${review.notes}</div>`:""}</div>` : "";
+
+        const managerLink = app.status === "pending_manager" ? `<div style="margin-top:10px"><a href="review.html?id=${app.id}" class="btn-link" target="_blank">🔗 Open Manager Review</a> <button class="btn-link" style="margin-left:6px" onclick="copyLink('${app.id}')">📋 Copy Link</button></div>` : "";
+
+        const ldForm = app.status === "pending_ld" ? `<div class="review-form"><textarea id="notes-${app.id}" placeholder="L&D review notes..."></textarea><div class="btn-group"><button class="btn btn-approve" onclick="ldReview('${app.id}','approve')">✅ Accept → Waiting List</button><button class="btn btn-reject" onclick="ldReview('${app.id}','reject')">❌ Reject</button></div></div>` : "";
+
+        const ldNotes = app.ld_notes ? `<div style="margin-top:12px;font-size:.85rem;color:#555"><strong>L&D Notes:</strong> ${app.ld_notes} (${app.ld_reviewed_at||""})</div>` : "";
+
+        html += `<div class="app-card"><div class="app-header"><span class="app-name">${app.aa_name} (${app.aa_login})</span><span class="badge badge-${app.status}">${STATUSES[app.status]||app.status}</span></div><div class="app-details"><div><span class="detail-label">Role:</span> ${app.critical_role}</div><div><span class="detail-label">Manager:</span> ${app.manager_name||"N/A"}</div><div><span class="detail-label">Department:</span> ${app.department||"N/A"}</div><div><span class="detail-label">Submitted:</span> ${app.submitted_at}</div></div><div style="margin-top:8px;font-size:.9rem;color:#555"><span class="detail-label">Justification:</span> ${app.justification}</div>${managerLink}${criteriaHtml}${ldForm}${ldNotes}</div>`;
+    });
+    document.getElementById("appList").innerHTML = html;
+}
+
+async function ldReview(appId, action) {
+    const btns = document.querySelectorAll(".btn"); btns.forEach(b=>b.disabled=true);
+    try {
+        const app = allApps.find(a=>a.id===appId);
+        app.ld_notes = document.getElementById(`notes-${appId}`).value.trim();
+        app.ld_reviewed_at = new Date().toISOString().replace("T"," ").substring(0,19);
+        app.status = action === "approve" ? "waiting_list" : "ld_rejected";
+
+        currentSha = await saveApplications(allApps, currentSha, `L&D ${action}: ${app.aa_name}`);
+        notifyFinalDecision(app);
+
+        const label = action === "approve" ? `${app.aa_name} added to Waiting List` : `Application rejected for ${app.aa_name}`;
+        document.getElementById("flash").innerHTML = `<div class="flash success">${label}</div>`;
+        renderApps(); renderFilters();
+    } catch(e) {
+        document.getElementById("flash").innerHTML = `<div class="flash" style="background:#f8d7da;color:#721c24">Error: ${e.message}</div>`;
+    }
+    btns.forEach(b=>b.disabled=false);
+}
+
+function copyLink(appId) {
+    const url = `${CONFIG.BASE_URL}/review.html?id=${appId}`;
+    navigator.clipboard.writeText(url).then(()=>{ document.getElementById("flash").innerHTML = '<div class="flash success">Link copied!</div>'; setTimeout(()=>{document.getElementById("flash").innerHTML=""},2000); });
+}
+
+init();
+</script>
+</body>
+</html>
