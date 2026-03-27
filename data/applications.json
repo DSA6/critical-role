@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": "mn8t74rnwaoq",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "Gatehouse Supervisor",
+    "justification": "love job",
+    "status": "pending_manager",
+    "submitted_at": "2026-03-27 11:19:34",
+    "manager_review": null,
+    "manager_reviewed_at": null,
+    "ld_notes": null,
+    "ld_reviewed_at": null
+  }
+]
