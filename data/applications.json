@@ -1,5 +1,28 @@
 [
   {
+    "id": "mn8v8ine9ixl",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "CRET Auditor",
+    "justification": "love it",
+    "status": "waiting_list",
+    "submitted_at": "2026-03-27 12:16:38",
+    "manager_review": {
+      "adapt": "pass",
+      "behavior": "pass",
+      "safety": "pass",
+      "performance": "pass",
+      "notes": ""
+    },
+    "manager_reviewed_at": "2026-03-27 12:19:15",
+    "ld_notes": "",
+    "ld_reviewed_at": "2026-03-27 12:20:23"
+  },
+  {
     "id": "mn8t74rnwaoq",
     "aa_login": "firdaub",
     "aa_name": "Firdaus Bustamam",
@@ -19,29 +42,6 @@
       "notes": ""
     },
     "manager_reviewed_at": "2026-03-27 11:22:15",
-    "ld_notes": null,
-    "ld_reviewed_at": null
-  },
-  {
-    "id": "mn8v8ine9ixl",
-    "aa_login": "firdaub",
-    "aa_name": "Firdaus Bustamam",
-    "manager_name": "Michelle Gray",
-    "manager_login": "",
-    "department": "1299",
-    "emp_type": "AMZN",
-    "critical_role": "CRET Auditor",
-    "justification": "love it",
-    "status": "pending_ld",
-    "submitted_at": "2026-03-27 12:16:38",
-    "manager_review": {
-      "adapt": "pass",
-      "behavior": "pass",
-      "safety": "pass",
-      "performance": "pass",
-      "notes": ""
-    },
-    "manager_reviewed_at": "2026-03-27 12:19:15",
     "ld_notes": null,
     "ld_reviewed_at": null
   }
