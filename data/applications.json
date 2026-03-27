@@ -55,10 +55,16 @@
     "emp_type": "AMZN",
     "critical_role": "Dock Clerk",
     "justification": "love it",
-    "status": "pending_manager",
+    "status": "manager_rejected",
     "submitted_at": "2026-03-27 12:26:26",
-    "manager_review": null,
-    "manager_reviewed_at": null,
+    "manager_review": {
+      "adapt": "fail",
+      "behavior": "fail",
+      "safety": "fail",
+      "performance": "fail",
+      "notes": ""
+    },
+    "manager_reviewed_at": "2026-03-27 12:27:41",
     "ld_notes": null,
     "ld_reviewed_at": null
   }
