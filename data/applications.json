@@ -67,5 +67,22 @@
     "manager_reviewed_at": "2026-03-27 12:27:41",
     "ld_notes": null,
     "ld_reviewed_at": null
+  },
+  {
+    "id": "mn8w7rtm53b8",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "Receive Problem Solver",
+    "justification": "love it",
+    "status": "pending_manager",
+    "submitted_at": "2026-03-27 12:44:03",
+    "manager_review": null,
+    "manager_reviewed_at": null,
+    "ld_notes": null,
+    "ld_reviewed_at": null
   }
 ]
