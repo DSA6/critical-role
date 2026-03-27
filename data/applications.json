@@ -44,5 +44,22 @@
     "manager_reviewed_at": "2026-03-27 11:22:15",
     "ld_notes": "",
     "ld_reviewed_at": "2026-03-27 12:20:27"
+  },
+  {
+    "id": "mn8vl3wbdjob",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "Dock Clerk",
+    "justification": "love it",
+    "status": "pending_manager",
+    "submitted_at": "2026-03-27 12:26:26",
+    "manager_review": null,
+    "manager_reviewed_at": null,
+    "ld_notes": null,
+    "ld_reviewed_at": null
   }
 ]
