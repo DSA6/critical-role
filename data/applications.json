@@ -32,7 +32,7 @@
     "emp_type": "AMZN",
     "critical_role": "Gatehouse Supervisor",
     "justification": "love job",
-    "status": "pending_ld",
+    "status": "waiting_list",
     "submitted_at": "2026-03-27 11:19:34",
     "manager_review": {
       "adapt": "",
@@ -42,7 +42,7 @@
       "notes": ""
     },
     "manager_reviewed_at": "2026-03-27 11:22:15",
-    "ld_notes": null,
-    "ld_reviewed_at": null
+    "ld_notes": "",
+    "ld_reviewed_at": "2026-03-27 12:20:27"
   }
 ]
