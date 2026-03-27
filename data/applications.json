@@ -21,5 +21,22 @@
     "manager_reviewed_at": "2026-03-27 11:22:15",
     "ld_notes": null,
     "ld_reviewed_at": null
+  },
+  {
+    "id": "mn8v8ine9ixl",
+    "aa_login": "firdaub",
+    "aa_name": "Firdaus Bustamam",
+    "manager_name": "Michelle Gray",
+    "manager_login": "",
+    "department": "1299",
+    "emp_type": "AMZN",
+    "critical_role": "CRET Auditor",
+    "justification": "love it",
+    "status": "pending_manager",
+    "submitted_at": "2026-03-27 12:16:38",
+    "manager_review": null,
+    "manager_reviewed_at": null,
+    "ld_notes": null,
+    "ld_reviewed_at": null
   }
 ]
