@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Critical Role</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+        .container{max-width:500px;margin:0 auto;padding:20px}
+        .header{background:#232f3e;color:#fff;padding:20px;text-align:center;border-radius:8px 8px 0 0}
+        .header h1{font-size:1.3rem;margin-bottom:4px}.header p{font-size:.85rem;opacity:.8}
+        .card{background:#fff;padding:24px;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .form-group{margin-bottom:16px}
+        label{display:block;font-weight:600;margin-bottom:6px;font-size:.9rem}
+        input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+        input:focus,select:focus,textarea:focus{outline:none;border-color:#ff9900}
+        textarea{resize:vertical;min-height:100px}
+        .required::after{content:" *";color:#e74c3c}
+        .btn{width:100%;padding:14px;background:#ff9900;color:#fff;border:none;border-radius:6px;font-size:1.1rem;font-weight:600;cursor:pointer}
+        .btn:hover{background:#e68a00}.btn:disabled{background:#ccc;cursor:not-allowed}
+        .flash{padding:12px;border-radius:6px;margin-bottom:16px;text-align:center}
+        .flash.success{background:#d4edda;color:#155724}
+        .flash.error{background:#f8d7da;color:#721c24}
+        .spinner{display:none;text-align:center;padding:20px;color:#ff9900}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Critical Role Application</h1>
+        <p>Enter your login or badge ID to get started</p>
+    </div>
+    <div class="card">
+        <div id="flash"></div>
+        <form id="applyForm" onsubmit="return submitForm(event)">
+            <div class="form-group">
+                <label class="required" for="aa_login">Your Login or Badge ID</label>
+                <input type="text" id="aa_login" name="aa_login" placeholder="e.g. johndoe or 202197574" required autocomplete="off">
+                <div id="lookupStatus" style="font-size:.8rem;margin-top:4px;color:#999"></div>
+            </div>
+            <div id="infoCard" style="display:none;background:#f0f7ff;border:1px solid #b8daff;border-radius:6px;padding:14px;margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem"><span style="color:#666">Name:</span><span id="infoName" style="font-weight:600">-</span></div>
+                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem"><span style="color:#666">Manager:</span><span id="infoManager" style="font-weight:600">-</span></div>
+                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem"><span style="color:#666">Department:</span><span id="infoDept" style="font-weight:600">-</span></div>
+            </div>
+            <input type="hidden" id="aa_name" name="aa_name" value="">
+            <input type="hidden" id="aa_manager" value="">
+            <input type="hidden" id="aa_department" value="">
+            <div class="form-group">
+                <label class="required" for="critical_role">Critical Role</label>
+                <select id="critical_role" name="critical_role" required>
+                    <option value="">-- Loading roles... --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="required" for="justification">Justification</label>
+                <textarea id="justification" name="justification" placeholder="Why are you applying for this role?" required></textarea>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Submit Application</button>
+        </form>
+        <div class="spinner" id="spinner">Submitting...</div>
+    </div>
+</div>
+<script src="config.js"></script>
+<script src="github-api.js"></script>
+<script src="slack-api.js"></script>
+<script>
+let rosterData = {};
+
+async function init() {
+    // Load roles
+    const roles = await loadRoles();
+    const sel = document.getElementById("critical_role");
+    sel.innerHTML = '<option value="">-- Select Role --</option>';
+    roles.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; sel.appendChild(o); });
+
+    // Load roster
+    document.getElementById("lookupStatus").textContent = "Loading roster...";
+    document.getElementById("lookupStatus").style.color = "#ff9900";
+    try {
+        rosterData = await loadRoster();
+        document.getElementById("lookupStatus").textContent = `Roster loaded (${Object.keys(rosterData).length} entries)`;
+        document.getElementById("lookupStatus").style.color = "#28a745";
+        setTimeout(() => { document.getElementById("lookupStatus").textContent = ""; }, 2000);
+    } catch(e) {
+        document.getElementById("lookupStatus").textContent = "Roster not available — enter name manually";
+        document.getElementById("lookupStatus").style.color = "#dc3545";
+    }
+
+    // Login lookup on input
+    let timer = null;
+    document.getElementById("aa_login").addEventListener("input", function() {
+        clearTimeout(timer);
+        const val = this.value.trim().toLowerCase();
+        if (val.length < 3) { document.getElementById("infoCard").style.display = "none"; return; }
+        timer = setTimeout(() => {
+            const info = rosterData[val];
+            const card = document.getElementById("infoCard");
+            if (info) {
+                card.style.display = "block";
+                card.style.background = "#f0f7ff";
+                card.style.borderColor = "#b8daff";
+                document.getElementById("infoName").textContent = info.name || "-";
+                document.getElementById("infoManager").textContent = info.manager || "-";
+                document.getElementById("infoDept").textContent = info.department || "-";
+                document.getElementById("aa_name").value = info.name || "";
+                document.getElementById("aa_manager").value = info.manager || "";
+                document.getElementById("aa_department").value = info.department || "";
+                document.getElementById("lookupStatus").textContent = "✅ Found in roster";
+                document.getElementById("lookupStatus").style.color = "#28a745";
+            } else {
+                card.style.display = "block";
+                card.style.background = "#fff3cd";
+                card.style.borderColor = "#ffc107";
+                document.getElementById("infoName").textContent = "Not found";
+                document.getElementById("infoManager").textContent = "Not found";
+                document.getElementById("infoDept").textContent = "Not found";
+                document.getElementById("aa_name").value = "";
+                document.getElementById("aa_manager").value = "";
+                document.getElementById("aa_department").value = "";
+                document.getElementById("lookupStatus").textContent = "Login not found — you can still submit";
+                document.getElementById("lookupStatus").style.color = "#dc3545";
+            }
+        }, 400);
+    });
+}
+
+async function submitForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const spinner = document.getElementById("spinner");
+    btn.disabled = true; spinner.style.display = "block";
+
+    try {
+        const id = Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+        const login = document.getElementById("aa_login").value.trim().toLowerCase();
+        const rosterInfo = rosterData[login] || {};
+
+        const app = {
+            id: id,
+            aa_login: login,
+            aa_name: rosterInfo.name || login,
+            manager_name: rosterInfo.manager || "Unknown",
+            manager_login: "",
+            department: rosterInfo.department || "",
+            emp_type: rosterInfo.emp_type || "",
+            critical_role: document.getElementById("critical_role").value,
+            justification: document.getElementById("justification").value.trim(),
+            status: "pending_manager",
+            submitted_at: new Date().toISOString().replace("T", " ").substring(0, 19),
+            manager_review: null,
+            manager_reviewed_at: null,
+            ld_notes: null,
+            ld_reviewed_at: null
+        };
+
+        const { data: apps, sha } = await loadApplications();
+        apps.push(app);
+        await saveApplications(apps, sha, "New application: " + app.aa_name + " for " + app.critical_role);
+        notifyManagerNewApp(app);
+
+        document.getElementById("flash").innerHTML = '<div class="flash success">Application submitted! Manager has been notified via Slack.</div>';
+        document.getElementById("applyForm").reset();
+        document.getElementById("infoCard").style.display = "none";
+    } catch (err) {
+        document.getElementById("flash").innerHTML = '<div class="flash error">Error: ' + err.message + '</div>';
+    }
+    btn.disabled = false; spinner.style.display = "none";
+    return false;
+}
+init();
+</script>
+</body>
+</html>
