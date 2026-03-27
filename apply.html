@@ -159,7 +159,7 @@ async function submitForm(e) {
         const { data: apps, sha } = await loadApplications();
         apps.push(app);
         await saveApplications(apps, sha, "New application: " + app.aa_name + " for " + app.critical_role);
-        notifyManagerNewApp(app);
+        notifyManagerNewApp(app, apps);
 
         document.getElementById("flash").innerHTML = '<div class="flash success">Application submitted! Manager has been notified via Slack.</div>';
         document.getElementById("applyForm").reset();
