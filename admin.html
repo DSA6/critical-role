@@ -25,6 +25,7 @@
         .badge-manager_rejected{background:#f8d7da;color:#721c24}
         .badge-waiting_list{background:#d4edda;color:#155724}
         .badge-ld_rejected{background:#f8d7da;color:#721c24}
+        .badge-completed{background:#17a2b8;color:#fff}
         .app-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.9rem;color:#555}
         .detail-label{font-weight:600}
         .manager-assessment{margin-top:12px;padding:12px;background:#f8f9fa;border-radius:6px}
@@ -63,6 +64,7 @@ const STATUSES = {
     pending_ld: "Pending L&D Review",
     manager_rejected: "Rejected by Manager",
     waiting_list: "Waiting List (Accepted)",
+    completed: "Completed ✅",
     ld_rejected: "Rejected by L&D"
 };
 
@@ -108,9 +110,13 @@ function renderApps() {
 
         const ldForm = app.status === "pending_ld" ? `<div class="review-form"><textarea id="notes-${app.id}" placeholder="L&D review notes..."></textarea><div class="btn-group"><button class="btn btn-approve" onclick="ldReview('${app.id}','approve')">✅ Accept → Waiting List</button><button class="btn btn-reject" onclick="ldReview('${app.id}','reject')">❌ Reject</button></div></div>` : "";
 
+        const completeForm = app.status === "waiting_list" ? `<div class="review-form"><div style="margin-bottom:10px"><label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">Trouble Ticket Number *</label><input type="text" id="tt-${app.id}" placeholder="e.g. TT-123456 or SIM-123456" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:.9rem"></div><textarea id="complete-notes-${app.id}" placeholder="Completion notes (optional)..."></textarea><div class="btn-group"><button class="btn" style="background:#17a2b8" onclick="markComplete('${app.id}')">✅ Mark as Completed</button></div></div>` : "";
+
+        const ttInfo = app.trouble_ticket ? `<div style="margin-top:12px;font-size:.85rem;color:#555"><strong>Trouble Ticket:</strong> ${app.trouble_ticket} | <strong>Completed:</strong> ${app.completed_at||""}</div>` : "";
+
         const ldNotes = app.ld_notes ? `<div style="margin-top:12px;font-size:.85rem;color:#555"><strong>L&D Notes:</strong> ${app.ld_notes} (${app.ld_reviewed_at||""})</div>` : "";
 
-        html += `<div class="app-card"><div class="app-header"><span class="app-name">${app.aa_name} (${app.aa_login})</span><span class="badge badge-${app.status}">${STATUSES[app.status]||app.status}</span></div><div class="app-details"><div><span class="detail-label">Role:</span> ${app.critical_role}</div><div><span class="detail-label">Manager:</span> ${app.manager_name||"N/A"}</div><div><span class="detail-label">Department:</span> ${app.department||"N/A"}</div><div><span class="detail-label">Submitted:</span> ${app.submitted_at}</div></div><div style="margin-top:8px;font-size:.9rem;color:#555"><span class="detail-label">Justification:</span> ${app.justification}</div>${managerLink}${criteriaHtml}${ldForm}${ldNotes}</div>`;
+        html += `<div class="app-card"><div class="app-header"><span class="app-name">${app.aa_name} (${app.aa_login})</span><span class="badge badge-${app.status}">${STATUSES[app.status]||app.status}</span></div><div class="app-details"><div><span class="detail-label">Role:</span> ${app.critical_role}</div><div><span class="detail-label">Manager:</span> ${app.manager_name||"N/A"}</div><div><span class="detail-label">Department:</span> ${app.department||"N/A"}</div><div><span class="detail-label">Submitted:</span> ${app.submitted_at}</div></div><div style="margin-top:8px;font-size:.9rem;color:#555"><span class="detail-label">Justification:</span> ${app.justification}</div>${managerLink}${criteriaHtml}${ldForm}${completeForm}${ldNotes}${ttInfo}</div>`;
     });
     document.getElementById("appList").innerHTML = html;
 }
@@ -133,6 +139,36 @@ async function ldReview(appId, action) {
         document.getElementById("flash").innerHTML = `<div class="flash" style="background:#f8d7da;color:#721c24">Error: ${e.message}</div>`;
     }
     btns.forEach(b=>b.disabled=false);
+}
+
+async function markComplete(appId) {
+    var ttInput = document.getElementById("tt-" + appId);
+    var tt = ttInput.value.trim();
+    if (!tt) { ttInput.style.borderColor = "#dc3545"; ttInput.focus(); return; }
+
+    var btns = document.querySelectorAll(".btn"); btns.forEach(function(b){b.disabled=true;});
+    try {
+        var app = allApps.find(function(a){return a.id===appId;});
+        app.trouble_ticket = tt;
+        app.completion_notes = document.getElementById("complete-notes-" + appId).value.trim();
+        app.completed_at = new Date().toISOString().replace("T"," ").substring(0,19);
+        app.status = "completed";
+
+        currentSha = await saveApplications(allApps, currentSha, "Completed: " + app.aa_name + " - TT: " + tt);
+
+        // Notify manager channel
+        var msg = "🎓 *Training Completed!*\n\n" +
+            "*" + app.aa_name + "* has completed training for *" + app.critical_role + "*\n" +
+            "Trouble Ticket: " + tt + "\n" +
+            "Completed: " + app.completed_at;
+        sendSlack(CONFIG.SLACK_WEBHOOK_MANAGER, msg);
+
+        document.getElementById("flash").innerHTML = '<div class="flash success">' + app.aa_name + ' marked as completed (TT: ' + tt + ')</div>';
+        renderApps(); renderFilters();
+    } catch(e) {
+        document.getElementById("flash").innerHTML = '<div class="flash" style="background:#f8d7da;color:#721c24">Error: ' + e.message + '</div>';
+    }
+    btns.forEach(function(b){b.disabled=false;});
 }
 
 function copyLink(appId) {
