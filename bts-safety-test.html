@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTS Safety Test</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+        .container{max-width:620px;margin:0 auto;padding:20px}
+        .header{background:#232f3e;color:#fff;padding:20px;text-align:center;border-radius:8px 8px 0 0}
+        .header h1{font-size:1.3rem;margin-bottom:4px}.header p{font-size:.85rem;opacity:.8}
+        .card{background:#fff;padding:24px;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .form-group{margin-bottom:16px}
+        label{display:block;font-weight:600;margin-bottom:6px;font-size:.9rem}
+        input[type="text"],input[type="password"]{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+        input:focus{outline:none;border-color:#ff9900}
+        .btn{width:100%;padding:14px;background:#ff9900;color:#fff;border:none;border-radius:6px;font-size:1.1rem;font-weight:600;cursor:pointer;margin-top:8px}
+        .btn:hover{background:#e68a00}.btn:disabled{background:#ccc;cursor:not-allowed}
+        .btn-sm{padding:10px 20px;font-size:.95rem;width:auto}
+        .flash{padding:12px;border-radius:6px;margin-bottom:16px;text-align:center}
+        .flash.error{background:#f8d7da;color:#721c24}
+        .qcard{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:16px;margin-bottom:12px}
+        .qcard h3{font-size:.95rem;margin-bottom:12px;color:#232f3e;line-height:1.4}
+        .qnum{color:#ff9900;font-weight:700}
+        .opt{display:block;padding:10px 14px;margin-bottom:6px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .15s;line-height:1.4}
+        .opt:hover{background:#fff3cd;border-color:#ffc107}
+        .opt.sel{background:#cce5ff;border-color:#007bff;font-weight:600}
+        .pbar{background:#e9ecef;border-radius:10px;height:8px;margin-bottom:16px;overflow:hidden}
+        .pfill{background:#ff9900;height:100%;border-radius:10px;transition:width .3s}
+        .info{display:flex;justify-content:space-between;font-size:.85rem;color:#666;margin-bottom:16px}
+        .result{text-align:center;padding:30px}
+        .result .icon{font-size:3rem;margin-bottom:12px}
+        .result .sc{font-size:2rem;font-weight:700;margin:12px 0}
+        .result .sc.pass{color:#28a745}.result .sc.fail{color:#dc3545}
+        .hidden{display:none}
+        .nav{display:flex;justify-content:space-between;margin-top:16px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header"><h1>🛡️ BTS Safety Test</h1><p>EUCF SDLP AR BTS Safety Assessment</p></div>
+    <div class="card">
+        <div id="flash"></div>
+        <div id="loginScreen">
+            <div class="form-group"><label>Your Login or Badge ID</label>
+            <input type="text" id="loginInput" placeholder="e.g. johndoe or 202197574" autocomplete="off"></div>
+            <div class="form-group"><label>Access Code</label>
+            <input type="password" id="pwInput" placeholder="Enter access code"></div>
+            <button class="btn" onclick="startQuiz()">Start Test</button>
+        </div>
+        <div id="quizScreen" class="hidden">
+            <div class="pbar"><div class="pfill" id="pf"></div></div>
+            <div class="info"><span>Attempt <b id="attNum">1</b> of 2</span><span>Question <b id="qN">1</b> of <b id="qT">10</b></span></div>
+            <div id="qArea"></div>
+            <div class="nav">
+                <button class="btn btn-sm" id="prevB" onclick="nav(-1)" style="background:#6c757d" disabled>← Prev</button>
+                <button class="btn btn-sm" id="nextB" onclick="nav(1)">Next →</button>
+            </div>
+        </div>
+        <div id="resultScreen" class="hidden"></div>
+        <div id="lockedScreen" class="hidden">
+            <div class="result">
+                <div class="icon">🔒</div>
+                <h2>Test Locked</h2>
+                <p>You have used both attempts.</p>
+                <p style="margin-top:8px;color:#dc3545;font-weight:600">⚠️ Please hand this device to your L&amp;D representative.</p>
+                <p style="margin-top:4px;font-size:.85rem;color:#666">L&amp;D can release a final attempt, which must be witnessed by HR.</p>
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee">
+                    <p style="font-size:.85rem;color:#888;margin-bottom:8px">L&amp;D Unlock</p>
+                    <input type="password" id="ldUnlockPw" placeholder="L&amp;D password" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;margin-bottom:8px">
+                    <input type="text" id="hrWitness" placeholder="HR witness name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;margin-bottom:8px">
+                    <button class="btn" style="background:#17a2b8;font-size:.95rem" onclick="ldUnlock()">🔓 Release Final Attempt</button>
+                    <div id="unlockFlash" style="margin-top:8px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+var ACCESS_CODE="258",LD_CODE="258",PASS_MARK=80,MAX_ATTEMPTS=2,QUESTIONS_PER_QUIZ=10;
+var POOL=[
+{q:"What is the safe way to lift items from the floor?",o:["Bend your back and keep your legs straight.","Use the kinetic lifting technique: bend your knees, keep your back straight, and lift with your legs.","Ask someone else to do it for you every time.","Lift quickly without thinking about posture."],a:1},
+{q:"What should you do if you notice a spill on the warehouse floor?",o:["Walk around it and continue working.","Clean it up if safe to do so, or report it immediately and place a warning sign.","Ignore it — someone else will deal with it.","Only report it at the end of your shift."],a:1},
+{q:"When is it appropriate to use your mobile phone on the warehouse floor?",o:["Anytime as long as you are not driving PIT equipment.","Only during break times in designated areas.","When you need to check the time.","While walking to your station."],a:1},
+{q:"What should you do if you find a damaged racking beam?",o:["Continue working and report it at the end of the shift.","Immediately report it to your manager and cordon off the area if necessary.","Try to fix it yourself.","Ignore it if it looks minor."],a:1},
+{q:"What is the correct action if a fire alarm sounds?",o:["Continue working until a manager tells you to stop.","Immediately stop work and follow the evacuation procedure to the nearest assembly point.","Finish your current task then evacuate.","Call 999 before evacuating."],a:1},
+{q:"What does a blue safety sign indicate?",o:["Warning of a hazard.","Prohibition — something you must not do.","Mandatory action — something you must do.","Safe condition or first aid."],a:2},
+{q:"Which of the following is NOT a safe practice when using a step ladder?",o:["Maintaining three points of contact.","Placing the ladder on a level surface.","Standing on the top step to reach higher.","Checking the ladder for damage before use."],a:2},
+{q:"What should you do if you come across a leaking HAZMAT product?",o:["Immediately report the leaking product to your team lead or area manager.","Pick the item up and perform a 6-sided check to see where the leak is coming from.","Clean up the spillage and put the item in the bin."],a:0},
+{q:"Why are lithium batteries designated as HAZMAT items?",o:["Because they can overheat and catch fire.","Because they are very expensive.","Because they are heavy.","Amazon does not stock items with lithium batteries."],a:0},
+{q:"What Personal Protective Equipment (PPE) is mandatory when working on the dock?",o:["High visibility clothing and safety footwear.","Safety glasses.","There are no specific PPE requirements in the dock area."],a:0},
+{q:"In which scenario should you press the E-Stop button or pull an E-Stop chord?",o:["When it is time for break.","If an item of clothing gets stuck in a conveyor.","If an item falls on the floor and gets damaged."],a:1},
+{q:"Are you allowed to enter the trailer yard without training or valid badge access?",o:["Yes","No"],a:1},
+{q:"Which of the following safety principles should you follow?",o:["Hold the handrail whilst taking the stairs.","Do not use electronic devices whilst walking.","Never attempt to catch falling items.","All of the above."],a:3},
+{q:"When working near the AR field, when should you push the E-Stop button?",o:["When there is a POD crash that could cause risk/endanger associates in that area.","When there is someone unauthorised on the Amazon Robotics (AR) floor.","When there is an emergency surrounding the AR active field.","All of the above."],a:3},
+{q:"Are you allowed to enter the AR floor without training?",o:["Yes","No"],a:1},
+{q:"You drop an item onto the AR floor whilst working at an AR station. What should you do?",o:["Raise an andon, which will inform a trained associate to retrieve the item (an Amnesty responder).","Pick up the item using Ready, Steady, Go techniques.","Try and pick the item up whilst the POD is in motion."],a:0}
+];
+
+var login="",attempt=0,qi=0,questions=[],answers=[],hrWitnessName="";
+
+function shuffle(arr){for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
+
+function getAttempts(l){try{return JSON.parse(localStorage.getItem("bts_"+l))||{count:0,results:[]};}catch(e){return{count:0,results:[]};}}
+function saveAttempts(l,d){localStorage.setItem("bts_"+l,JSON.stringify(d));}
+
+function startQuiz(){
+    login=document.getElementById("loginInput").value.trim().toLowerCase();
+    var pw=document.getElementById("pwInput").value.trim();
+    if(!login){flash("Enter your login or badge ID.","error");return;}
+    if(pw!==ACCESS_CODE){flash("Invalid access code.","error");return;}
+    var d=getAttempts(login);
+    if(d.count>=MAX_ATTEMPTS){
+        var alreadyUnlocked=d.ldUnlocked&&d.count>MAX_ATTEMPTS;
+        document.getElementById("loginScreen").classList.add("hidden");
+        if(alreadyUnlocked){
+            document.getElementById("lockedScreen").classList.remove("hidden");
+            document.getElementById("lockedScreen").innerHTML='<div class="result"><div class="icon">🔒</div><h2>Permanently Locked</h2><p>All attempts including the L&D final attempt have been used.</p><p style="margin-top:8px;font-size:.85rem;color:#dc3545">Please speak with your manager and L&D team for next steps.</p></div>';
+        } else {
+            document.getElementById("lockedScreen").classList.remove("hidden");
+        }
+        return;
+    }
+    attempt=d.count+1;
+    var pool=shuffle(POOL.slice());
+    questions=pool.slice(0,Math.min(QUESTIONS_PER_QUIZ,pool.length));
+    answers=new Array(questions.length).fill(-1);
+    qi=0;
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("quizScreen").classList.remove("hidden");
+    document.getElementById("attNum").textContent=attempt;
+    document.getElementById("qT").textContent=questions.length;
+    renderQ();
+}
+
+function renderQ(){
+    var q=questions[qi];
+    var h='<div class="qcard"><h3><span class="qnum">Q'+(qi+1)+'.</span> '+q.q+'</h3>';
+    q.o.forEach(function(o,i){
+        h+='<div class="opt'+(answers[qi]===i?' sel':'')+'" onclick="pick('+i+')">'+o+'</div>';
+    });
+    h+='</div>';
+    document.getElementById("qArea").innerHTML=h;
+    document.getElementById("qN").textContent=qi+1;
+    document.getElementById("pf").style.width=((qi+1)/questions.length*100)+"%";
+    document.getElementById("prevB").disabled=qi===0;
+    document.getElementById("nextB").textContent=qi===questions.length-1?"Submit ✓":"Next →";
+}
+
+function pick(i){answers[qi]=i;renderQ();}
+
+function nav(dir){
+    if(dir===1&&qi===questions.length-1){submitQuiz();return;}
+    qi=Math.max(0,Math.min(questions.length-1,qi+dir));
+    renderQ();
+}
+
+function submitQuiz(){
+    var unanswered=answers.filter(function(a){return a===-1;}).length;
+    if(unanswered>0){flash("Please answer all questions. "+unanswered+" remaining.","error");return;}
+    var correct=0;
+    questions.forEach(function(q,i){if(answers[i]===q.a)correct++;});
+    var pct=Math.round(correct/questions.length*100);
+    var passed=pct>=PASS_MARK;
+
+    var d=getAttempts(login);
+    d.count=attempt;
+    d.results.push({attempt:attempt,score:pct,passed:passed,date:new Date().toISOString().replace("T"," ").substring(0,19),total:questions.length,correct:correct,hrWitness:hrWitnessName||null});
+    saveAttempts(login,d);
+
+    document.getElementById("quizScreen").classList.add("hidden");
+    var rs=document.getElementById("resultScreen");
+    rs.classList.remove("hidden");
+
+    if(passed){
+        rs.innerHTML='<div class="result"><div class="icon">🎉</div><h2>Congratulations!</h2>'+
+            '<div class="sc pass">'+pct+'%</div>'+
+            '<p>You passed the BTS Safety Test! ('+correct+'/'+questions.length+')</p>'+
+            '<p style="margin-top:12px;font-size:.9rem;color:#666">Attempt '+attempt+' of '+MAX_ATTEMPTS+'</p></div>';
+    } else {
+        var canRetry=attempt<MAX_ATTEMPTS;
+        var isFinalAttempt=hrWitnessName!=="";
+        var lockMsg=isFinalAttempt?
+            '<p style="margin-top:8px;color:#dc3545;font-weight:600">All attempts used including HR-witnessed final attempt.</p><p style="margin-top:4px;font-size:.85rem;color:#666">Please speak with your manager and L&D team for next steps.</p>':
+            '<p style="margin-top:8px;color:#dc3545;font-weight:600">⚠️ Both attempts used.</p><p style="margin-top:4px;font-size:.85rem">Please hand this device to your L&amp;D representative.<br>L&amp;D can release one final attempt witnessed by HR.</p>';
+        rs.innerHTML='<div class="result"><div class="icon">'+(canRetry?'😔':'🔒')+'</div>'+
+            '<h2>'+(canRetry?'Not Passed':'Test Locked')+'</h2>'+
+            '<div class="sc fail">'+pct+'%</div>'+
+            '<p>You needed '+PASS_MARK+'% to pass. ('+correct+'/'+questions.length+')</p>'+
+            (canRetry?'<p style="margin-top:8px;color:#666">You have 1 attempt remaining.</p><button class="btn" style="margin-top:16px;max-width:250px" onclick="retryQuiz()">Try Again</button>':lockMsg)+
+            '</div>';
+    }
+}
+
+function retryQuiz(){
+    document.getElementById("resultScreen").classList.add("hidden");
+    document.getElementById("quizScreen").classList.remove("hidden");
+    var pool=shuffle(POOL.slice());
+    questions=pool.slice(0,Math.min(QUESTIONS_PER_QUIZ,pool.length));
+    answers=new Array(questions.length).fill(-1);
+    qi=0;
+    attempt++;
+    document.getElementById("attNum").textContent=attempt;
+    renderQ();
+}
+
+function flash(msg,type){
+    document.getElementById("flash").innerHTML='<div class="flash '+(type||"")+'">'+msg+'</div>';
+    setTimeout(function(){document.getElementById("flash").innerHTML="";},4000);
+}
+
+function ldUnlock(){
+    var pw=document.getElementById("ldUnlockPw").value.trim();
+    var hr=document.getElementById("hrWitness").value.trim();
+    var uf=document.getElementById("unlockFlash");
+    if(pw!==LD_CODE){uf.innerHTML='<div class="flash error">Invalid L&D password.</div>';return;}
+    if(!hr){uf.innerHTML='<div class="flash error">HR witness name is required.</div>';return;}
+    hrWitnessName=hr;
+    var d=getAttempts(login);
+    d.ldUnlocked=true;
+    d.hrWitness=hr;
+    d.unlockDate=new Date().toISOString().replace("T"," ").substring(0,19);
+    saveAttempts(login,d);
+    attempt=d.count+1;
+    var pool=shuffle(POOL.slice());
+    questions=pool.slice(0,Math.min(QUESTIONS_PER_QUIZ,pool.length));
+    answers=new Array(questions.length).fill(-1);
+    qi=0;
+    document.getElementById("lockedScreen").classList.add("hidden");
+    document.getElementById("quizScreen").classList.remove("hidden");
+    document.getElementById("attNum").textContent=attempt+" (Final — HR witnessed)";
+    document.getElementById("qT").textContent=questions.length;
+    renderQ();
+}
+</script>
+</body>
+</html>
