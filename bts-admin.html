@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTS Safety Test — L&D Admin</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+        .container{max-width:1100px;margin:0 auto;padding:20px}
+        .header{background:#232f3e;color:#fff;padding:20px 24px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+        .header h1{font-size:1.4rem}
+        .hdr-btns button{background:#ff9900;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.85rem;margin-left:8px}
+        .hdr-btns button:hover{background:#e68a00}
+        .hdr-btns .btn-teal{background:#17a2b8}
+        .card{background:#fff;padding:24px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:16px}
+        .login-card{max-width:400px;margin:60px auto}
+        .form-group{margin-bottom:16px}
+        label{display:block;font-weight:600;margin-bottom:6px;font-size:.9rem}
+        input[type="password"],input[type="text"]{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+        input:focus{outline:none;border-color:#ff9900}
+        .btn{width:100%;padding:14px;background:#ff9900;color:#fff;border:none;border-radius:6px;font-size:1.1rem;font-weight:600;cursor:pointer;margin-top:8px}
+        .btn:hover{background:#e68a00}
+        .flash{padding:12px;border-radius:6px;margin-bottom:16px;text-align:center}
+        .flash.error{background:#f8d7da;color:#721c24}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+        .stat{background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+        .stat .num{font-size:1.8rem;font-weight:700;color:#232f3e}
+        .stat .lbl{font-size:.8rem;color:#666;margin-top:4px}
+        .stat.pass .num{color:#28a745}
+        .stat.fail .num{color:#dc3545}
+        .stat.locked .num{color:#ff9900}
+        table{width:100%;border-collapse:collapse;font-size:.9rem}
+        th{background:#232f3e;color:#fff;padding:10px 12px;text-align:left;font-size:.8rem;text-transform:uppercase}
+        td{padding:10px 12px;border-bottom:1px solid #eee}
+        tr:hover{background:#f8f9fa}
+        .badge{padding:3px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+        .badge-pass{background:#d4edda;color:#155724}
+        .badge-fail{background:#f8d7da;color:#721c24}
+        .badge-locked{background:#fff3cd;color:#856404}
+        .badge-hr{background:#d1ecf1;color:#0c5460}
+        .actions button{padding:4px 10px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:.8rem;margin-right:4px}
+        .actions button:hover{background:#f8f9fa}
+        .actions .btn-danger{color:#dc3545;border-color:#dc3545}
+        .actions .btn-unlock{color:#17a2b8;border-color:#17a2b8}
+        .empty{text-align:center;padding:40px;color:#999}
+        .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+        .filter-btn{padding:6px 14px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;font-size:.82rem}
+        .filter-btn.active{background:#ff9900;color:#fff;border-color:#ff9900}
+        .search{margin-bottom:16px}
+        .search input{padding:10px 14px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;width:300px}
+        .hidden{display:none}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="loginView" class="login-card">
+        <div class="header" style="border-radius:8px 8px 0 0"><h1>🛡️ BTS Admin Dashboard</h1></div>
+        <div class="card" style="border-radius:0 0 8px 8px">
+            <div id="flash"></div>
+            <div class="form-group"><label>Admin Password</label>
+            <input type="password" id="adminPw" placeholder="Enter admin password"></div>
+            <button class="btn" onclick="adminLogin()">Login</button>
+        </div>
+    </div>
+    <div id="dashView" class="hidden">
+        <div class="header">
+            <h1>🛡️ BTS Safety Test — L&D Admin</h1>
+            <div class="hdr-btns">
+                <button onclick="loadData()">🔄 Refresh</button>
+                <button class="btn-teal" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+        </div>
+        <div class="stats" id="statsArea"></div>
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+                <div class="filters" id="filters"></div>
+                <div class="search"><input type="text" id="searchInput" placeholder="Search login..." oninput="renderTable()"></div>
+            </div>
+            <div id="tableArea"></div>
+        </div>
+    </div>
+</div>
+<script>
+var ADMIN_PW="258",currentFilter="all",allUsers=[];
+
+function adminLogin(){
+    if(document.getElementById("adminPw").value.trim()!==ADMIN_PW){
+        document.getElementById("flash").innerHTML='<div class="flash error">Invalid password.</div>';return;
+    }
+    document.getElementById("loginView").classList.add("hidden");
+    document.getElementById("dashView").classList.remove("hidden");
+    loadData();
+}
+document.getElementById("adminPw").addEventListener("keypress",function(e){if(e.key==="Enter")adminLogin();});
+
+function loadData(){
+    allUsers=[];
+    for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(k.startsWith("bts_")){
+            try{
+                var d=JSON.parse(localStorage.getItem(k));
+                var login=k.substring(4);
+                d.login=login;
+                allUsers.push(d);
+            }catch(e){}
+        }
+    }
+    allUsers.sort(function(a,b){
+        var da=a.results&&a.results.length?a.results[a.results.length-1].date:"";
+        var db=b.results&&b.results.length?b.results[b.results.length-1].date:"";
+        return db.localeCompare(da);
+    });
+    renderStats();
+    renderFilters();
+    renderTable();
+}
+
+function getStatus(u){
+    if(!u.results||!u.results.length)return"pending";
+    var last=u.results[u.results.length-1];
+    if(last.passed)return"pass";
+    if(u.ldUnlocked&&u.count>2)return"locked";
+    if(u.count>=2&&!u.ldUnlocked)return"locked";
+    return"fail";
+}
+
+function renderStats(){
+    var total=allUsers.length,passed=0,failed=0,locked=0;
+    allUsers.forEach(function(u){
+        var s=getStatus(u);
+        if(s==="pass")passed++;
+        else if(s==="locked")locked++;
+        else if(s==="fail")failed++;
+    });
+    document.getElementById("statsArea").innerHTML=
+        '<div class="stat"><div class="num">'+total+'</div><div class="lbl">Total Tested</div></div>'+
+        '<div class="stat pass"><div class="num">'+passed+'</div><div class="lbl">Passed</div></div>'+
+        '<div class="stat fail"><div class="num">'+failed+'</div><div class="lbl">Failed (retries left)</div></div>'+
+        '<div class="stat locked"><div class="num">'+locked+'</div><div class="lbl">Locked</div></div>';
+}
+
+function renderFilters(){
+    var counts={all:allUsers.length,pass:0,fail:0,locked:0};
+    allUsers.forEach(function(u){var s=getStatus(u);if(counts[s]!==undefined)counts[s]++;});
+    var labels={all:"All",pass:"Passed",fail:"Failed",locked:"Locked"};
+    var h="";
+    for(var k in labels){
+        h+='<span class="filter-btn'+(currentFilter===k?' active':'')+'" onclick="setFilter(\''+k+'\')">'+labels[k]+' ('+counts[k]+')</span>';
+    }
+    document.getElementById("filters").innerHTML=h;
+}
+
+function setFilter(f){currentFilter=f;renderFilters();renderTable();}
+
+function renderTable(){
+    var search=document.getElementById("searchInput").value.trim().toLowerCase();
+    var filtered=allUsers.filter(function(u){
+        var s=getStatus(u);
+        if(currentFilter!=="all"&&s!==currentFilter)return false;
+        if(search&&u.login.indexOf(search)===-1)return false;
+        return true;
+    });
+    if(!filtered.length){document.getElementById("tableArea").innerHTML='<div class="empty">No results found.</div>';return;}
+    var h='<table><thead><tr><th>Login</th><th>Attempts</th><th>Last Score</th><th>Status</th><th>Last Date</th><th>HR Witness</th><th>Actions</th></tr></thead><tbody>';
+    filtered.forEach(function(u){
+        var s=getStatus(u);
+        var last=u.results&&u.results.length?u.results[u.results.length-1]:{};
+        var badge=s==="pass"?'<span class="badge badge-pass">PASSED</span>':
+                  s==="locked"?'<span class="badge badge-locked">LOCKED</span>':
+                  '<span class="badge badge-fail">FAILED</span>';
+        var hrBadge=u.hrWitness?'<span class="badge badge-hr">'+u.hrWitness+'</span>':'—';
+        var scores=u.results?u.results.map(function(r){return r.score+'%';}).join(', '):'—';
+        h+='<tr><td><b>'+u.login+'</b></td><td>'+u.count+'/2'+(u.ldUnlocked?' +1 (L&D)':'')+'</td>'+
+            '<td>'+(last.score!==undefined?last.score+'%':'—')+'</td><td>'+badge+'</td>'+
+            '<td>'+(last.date||'—')+'</td><td>'+hrBadge+'</td>'+
+            '<td class="actions"><button onclick="viewDetail(\''+u.login+'\')" title="View details">👁️</button>'+
+            '<button class="btn-unlock" onclick="resetUser(\''+u.login+'\')" title="Reset all attempts">🔄</button>'+
+            '<button class="btn-danger" onclick="deleteUser(\''+u.login+'\')" title="Delete record">🗑️</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    document.getElementById("tableArea").innerHTML=h;
+}
+
+function viewDetail(login){
+    var d=JSON.parse(localStorage.getItem("bts_"+login)||"{}");
+    var h='<h3 style="margin-bottom:12px">'+login+' — Test History</h3>';
+    if(d.results&&d.results.length){
+        h+='<table><thead><tr><th>Attempt</th><th>Score</th><th>Result</th><th>Date</th><th>HR Witness</th></tr></thead><tbody>';
+        d.results.forEach(function(r){
+            h+='<tr><td>'+r.attempt+'</td><td>'+r.score+'%</td>'+
+                '<td>'+(r.passed?'<span class="badge badge-pass">PASS</span>':'<span class="badge badge-fail">FAIL</span>')+'</td>'+
+                '<td>'+r.date+'</td><td>'+(r.hrWitness||'—')+'</td></tr>';
+        });
+        h+='</tbody></table>';
+    } else { h+='<p>No attempts recorded.</p>'; }
+    if(d.ldUnlocked){h+='<p style="margin-top:12px;font-size:.85rem;color:#17a2b8">L&D unlocked on '+d.unlockDate+' — HR witness: '+d.hrWitness+'</p>';}
+    h+='<button class="btn" style="max-width:200px;margin-top:16px;font-size:.9rem" onclick="loadData()">← Back</button>';
+    document.getElementById("tableArea").innerHTML='<div class="card">'+h+'</div>';
+}
+
+function resetUser(login){
+    if(!confirm("Reset all attempts for "+login+"? This will allow them to retake the test from scratch."))return;
+    localStorage.removeItem("bts_"+login);
+    loadData();
+}
+
+function deleteUser(login){
+    if(!confirm("Delete all records for "+login+"? This cannot be undone."))return;
+    localStorage.removeItem("bts_"+login);
+    loadData();
+}
+
+function exportCSV(){
+    var rows=[["Login","Attempt","Score","Result","Date","HR Witness","L&D Unlocked"]];
+    allUsers.forEach(function(u){
+        if(u.results){u.results.forEach(function(r){
+            rows.push([u.login,r.attempt,r.score+"%",r.passed?"PASS":"FAIL",r.date,r.hrWitness||"",u.ldUnlocked?"Yes":"No"]);
+        });}
+    });
+    var csv="\uFEFF"+rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+    var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download="bts_safety_results_"+new Date().toISOString().substring(0,10)+".csv";
+    a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
