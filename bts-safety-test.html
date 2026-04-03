@@ -80,22 +80,22 @@
 <script>
 var ACCESS_CODE="258",LD_CODE="258",PASS_MARK=80,MAX_ATTEMPTS=2,QUESTIONS_PER_QUIZ=16;
 var POOL=[
-{q:"What is the safe way to lift items from the floor?",o:["Bend your back and keep your legs straight.","Use the kinetic lifting technique: bend your knees, keep your back straight, and lift with your legs.","Ask someone else to do it for you every time.","Lift quickly without thinking about posture."],a:1},
-{q:"What should you do if you notice a spill on the warehouse floor?",o:["Walk around it and continue working.","Clean it up if safe to do so, or report it immediately and place a warning sign.","Ignore it — someone else will deal with it.","Only report it at the end of your shift."],a:1},
-{q:"When is it appropriate to use your mobile phone on the warehouse floor?",o:["Anytime as long as you are not driving PIT equipment.","Only during break times in designated areas.","When you need to check the time.","While walking to your station."],a:1},
-{q:"What should you do if you find a damaged racking beam?",o:["Continue working and report it at the end of the shift.","Immediately report it to your manager and cordon off the area if necessary.","Try to fix it yourself.","Ignore it if it looks minor."],a:1},
-{q:"What is the correct action if a fire alarm sounds?",o:["Continue working until a manager tells you to stop.","Immediately stop work and follow the evacuation procedure to the nearest assembly point.","Finish your current task then evacuate.","Call 999 before evacuating."],a:1},
-{q:"What does a blue safety sign indicate?",o:["Warning of a hazard.","Prohibition — something you must not do.","Mandatory action — something you must do.","Safe condition or first aid."],a:2},
-{q:"Which of the following is NOT a safe practice when using a step ladder?",o:["Maintaining three points of contact.","Placing the ladder on a level surface.","Standing on the top step to reach higher.","Checking the ladder for damage before use."],a:2},
-{q:"What should you do if you come across a leaking HAZMAT product?",o:["Immediately report the leaking product to your team lead or area manager.","Pick the item up and perform a 6-sided check to see where the leak is coming from.","Clean up the spillage and put the item in the bin."],a:0},
-{q:"Why are lithium batteries designated as HAZMAT items?",o:["Because they can overheat and catch fire.","Because they are very expensive.","Because they are heavy.","Amazon does not stock items with lithium batteries."],a:0},
-{q:"What Personal Protective Equipment (PPE) is mandatory when working on the dock?",o:["High visibility clothing and safety footwear.","Safety glasses.","There are no specific PPE requirements in the dock area."],a:0},
-{q:"In which scenario should you press the E-Stop button or pull an E-Stop chord?",o:["When it is time for break.","If an item of clothing gets stuck in a conveyor.","If an item falls on the floor and gets damaged."],a:1},
-{q:"Are you allowed to enter the trailer yard without training or valid badge access?",o:["Yes","No"],a:1},
-{q:"Which of the following safety principles should you follow?",o:["Hold the handrail whilst taking the stairs.","Do not use electronic devices whilst walking.","Never attempt to catch falling items.","All of the above."],a:3},
-{q:"When working near the AR field, when should you push the E-Stop button?",o:["When there is a POD crash that could cause risk/endanger associates in that area.","When there is someone unauthorised on the Amazon Robotics (AR) floor.","When there is an emergency surrounding the AR active field.","All of the above."],a:3},
+{q:"What behaviours must you follow when working near conveyors?",o:["Do not touch or climb the conveyor.","Stand clear of conveyor pinch points.","Press the emergency stop (e-stop) if a safety incident occurs.","All of the above."],a:3},
 {q:"Are you allowed to enter the AR floor without training?",o:["Yes","No"],a:1},
-{q:"You drop an item onto the AR floor whilst working at an AR station. What should you do?",o:["Raise an andon, which will inform a trained associate to retrieve the item (an Amnesty responder).","Pick up the item using Ready, Steady, Go techniques.","Try and pick the item up whilst the POD is in motion."],a:0}
+{q:"How should you pick up a tote or item from a low level?",o:["Face the item; feet apart, you may need to kneel on one knee, keep item close to body, get a good grip and use power through your legs.","Kneel with both knees or sit on the floor to take item.","Use straight legs and arch your back to take item."],a:0},
+{q:"Which of the following safety principles should you follow?",o:["Hold the handrail whilst taking the stairs.","Do not use electronic devices whilst walking.","Never attempt to catch falling items.","All of the above."],a:3},
+{q:"What should you do if you come across a leaking HAZMAT product?",o:["Pick the item up and perform a 6-sided check to see where the leak is coming from.","Immediately report the leaking product to your Team Lead or Area Manager.","Clean up the spillage and put the item in the bin."],a:1},
+{q:"Which color tape is used for pedestrian walkways?",o:["Blue","Orange","Green"],a:2},
+{q:"When should you push the E-Stop button?",o:["When there is a POD crash that could cause risk/endanger associates in that area.","When there is someone unauthorised on the AR floor.","When there is an emergency surrounding the Amazon Robotics active field.","All of the above."],a:3},
+{q:"What is the dress code when working near conveyors?",o:["Tie long hair back.","Do not wear loose clothing or jewelry.","Only wear Amazon lanyard that has a safety clip.","All of the above."],a:3},
+{q:"What should you do if you witness, or are involved in an accident or near miss?",o:["Do nothing. Carry on working and report the incident later.","Ignore the incident and keep working.","Inform your Area Manager, Team Lead or Health & Safety immediately and preserve the incident area."],a:2},
+{q:"Are you allowed to enter the trailer yard without training or valid ID?",o:["Yes","No"],a:1},
+{q:"The fire alarm goes off, what do you do?",o:["Finish what you are doing and then leave the building.","Walk to your fire assembly point via the nearest fire exit.","Run to get your belongings from your locker."],a:1},
+{q:"What Personal Protective Equipment (PPE) is mandatory when working on the dock?",o:["Safety Glasses.","High visibility clothing and safety footwear.","There are no specific requirements for PPE in the dock area."],a:1},
+{q:"Where can you cross a PIT lane?",o:["Anywhere that is more than 2 meters away from the PIT vehicle.","At the end of a PIT lane.","At a blue and white striped pedestrian crossing."],a:2},
+{q:"You drop an item onto the AR floor whilst working at an AR station. What should you do?",o:["Raise an andon, which will inform a trained associate to retrieve the item (an Amnesty responder).","Pick up the item using Ready, Steady, Go principles.","Try and pick the item up whilst the pod is in motion."],a:0},
+{q:"Why are lithium batteries designated as HAZMAT items?",o:["Because they are very expensive.","Because they are heavy.","Because they can overheat and catch fire.","Amazon does not stock items with lithium batteries."],a:2},
+{q:"In which scenario should you press the E-Stop button / pull an E-Stop chord?",o:["If you find a leaking HAZMAT item.","If an item of clothing gets stuck in a conveyor.","If an item falls on the floor and gets damaged."],a:1}
 ];
 
 var login="",attempt=0,qi=0,questions=[],answers=[],hrWitnessName="";
